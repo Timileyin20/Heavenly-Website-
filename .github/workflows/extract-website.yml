@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
   push:
     paths:
-      - "heavenly-github-ready.zip"
+      - "unzip -o heavenly-github-ready-fixed.zip -d /tmp/heavenly"
 
 permissions:
   contents: write
@@ -22,7 +22,7 @@ jobs:
           mkdir -p /tmp/heavenly
           unzip -o heavenly-github-ready.zip -d /tmp/heavenly
           cp -a /tmp/heavenly/. .
-          rm -f heavenly-github-ready.zip
+          rm -f heavenly-github-ready-fixed.zip
 
       - name: Save website files
         run: |
