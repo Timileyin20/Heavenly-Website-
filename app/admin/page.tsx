@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { supabase } from '@/lib/supabase'
+import { supabase } from '../../lib/supabase'
 
 export default function AdminPage(){
   const [checking,setChecking]=useState(true),[admin,setAdmin]=useState(false),[stats,setStats]=useState({users:0,listings:0,orders:0,refunds:0}),[listings,setListings]=useState<any[]>([]),[refunds,setRefunds]=useState<any[]>([]),[error,setError]=useState('')
