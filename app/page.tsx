@@ -1,24 +1,37 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
+import { supabase } from '../lib/supabase'
 
-const homes = [
-  { id: 1, title: 'Modern Lakeview Residence', city: 'Austin, TX', price: '$845,000', meta: '4 bd · 3 ba · 2,680 sq ft', tag: 'For Sale', image: 'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=1200&q=85' },
-  { id: 2, title: 'Sunlit Family Home', city: 'Irvine, CA', price: '$3,450/mo', meta: '3 bd · 2 ba · 1,940 sq ft', tag: 'For Rent', image: 'https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?auto=format&fit=crop&w=1200&q=85' },
-  { id: 3, title: 'Contemporary City House', city: 'Dallas, TX', price: '$629,000', meta: '3 bd · 2.5 ba · 2,210 sq ft', tag: 'For Sale', image: 'https://images.unsplash.com/photo-1600566753086-00f18fb6b3ea?auto=format&fit=crop&w=1200&q=85' },
-]
-
-const items = [
-  { id: 1, name: 'Mid-Century Lounge Chair', price: '$185', condition: 'Used · Excellent', image: 'https://images.unsplash.com/photo-1567538096630-e0c55bd6374c?auto=format&fit=crop&w=900&q=85' },
-  { id: 2, name: 'Minimal Oak Dining Set', price: '$420', condition: 'New', image: 'https://images.unsplash.com/photo-1618220179428-22790b461013?auto=format&fit=crop&w=900&q=85' },
-  { id: 3, name: 'Smart Countertop Oven', price: '$129', condition: 'Used · Like New', image: 'https://images.unsplash.com/photo-1585515320310-259814833e62?auto=format&fit=crop&w=900&q=85' },
-  { id: 4, name: 'Modern Table Lamp', price: '$65', condition: 'New', image: 'https://images.unsplash.com/photo-1507473885765-e6ed057f782c?auto=format&fit=crop&w=900&q=85' },
-]
 
 export default function Home() {
   const [mode, setMode] = useState('Buy')
   const [query, setQuery] = useState('')
+  
+const [homes, setHomes] = useState<any[]>([])
+const [items, setItems] = useState<any[]>([])
+const [loadingListings, setLoadingListings] = useState(true)
 
+useEffect(() => {
+  async function loadListings() {
+    setLoadingListings(true)
+
+    const { data, error } = await supabase
+      .from('listings')
+      .select('*')
+      .eq('status', 'active')
+      .order('created_at', { ascending: false })
+
+    if (!error && data) {
+      setHomes(data.filter((listing) => listing.kind === 'property').slice(0, 3))
+      setItems(data.filter((listing) => listing.kind === 'item').slice(0, 4))
+    }
+
+    setLoadingListings(false)
+  }
+
+  loadListings()
+}, [])
   return (
     <main>
       <nav className="nav container">
@@ -47,7 +60,9 @@ export default function Home() {
 
       <section className="section container" id="homes">
         <div className="sectionHead"><div><span className="kicker">EXPLORE HOMES</span><h2>Places worth coming home to.</h2></div><a href="/properties" className="textLink">View all homes →</a></div>
-        <div className="homeGrid">{homes.map(h => <article className="homeCard" key={h.id}><div className="cardImage"><img src={h.image} alt=""/><span className="pill">{h.tag}</span><button className="heart">♡</button></div><div className="cardBody"><div className="price">{h.price}</div><h3>{h.title}</h3><p>{h.city}</p><small>{h.meta}</small></div></article>)}</div>
+        <div className="homeGrid">{homes.map(h => <article className="homeCard" key={h.id}><div className="cardImage"><img src={h.images?.[0] || 'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=1200&q=85'} alt={h.title}/><span className="pill">{h.tag}</span><button className="heart">♡</button></div><div className="cardBody"><div className="price">
+  {h.property_mode === 'rent' ? `$${Number(h.price).toLocaleString()}/mo` : `$${Number(h.price).toLocaleString()}`}
+</div><h3>{h.title}</h3><p>{h.city}</p><small>{h.meta}</small></div></article>)}</div>
       </section>
 
       <section className="splitSection">
