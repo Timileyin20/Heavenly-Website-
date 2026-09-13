@@ -70,7 +70,7 @@ useEffect(() => {
       <section className="splitSection">
         <div className="container split">
           <div className="splitCopy"><span className="kicker">MORE THAN REAL ESTATE</span><h2>Make your new place feel like <em>yours.</em></h2><p>From a first apartment to a forever home, find the furniture and appliances that complete your space — new or pre-loved.</p><a className="btn btn-dark" href="/marketplace">Shop the marketplace</a></div>
-          <div className="itemShowcase"><img src={items[0].image} alt="Lounge chair"/><div className="floatingProduct"><span>Featured find</span><strong>{items[0].name}</strong><b>{items[0].price}</b></div></div>
+          <div className="itemShowcase"><img src={items[0]?.images?.[0] || 'https://images.unsplash.com/photo-1567538096630-e0c55bd6374c?auto=format&fit=crop&w=900&q=85'} alt={items[0]?.title || 'Featured item'}/><div className="floatingProduct"><span>Featured find</span><strong>{items[0].name}</strong><b>{items[0].price}</b></div></div>
         </div>
       </section>
 
