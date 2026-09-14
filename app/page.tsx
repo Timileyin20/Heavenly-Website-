@@ -55,14 +55,7 @@ useEffect(() => {
             <div className="searchInput"><span>⌕</span><input
   value={query}
   onChange={e => setQuery(e.target.value)}
-  onKeyDown={e => {
-    if (e.key === 'Enter') {
-      window.location.href =
-        mode === 'Marketplace'
-          ? `/marketplace?search=${encodeURIComponent(query)}`
-          : `/properties?search=${encodeURIComponent(query)}`
-    }
-  }}
+  
   placeholder={mode === 'Marketplace' ? 'Search furniture, appliances, decor…' : 'City, ZIP code, neighborhood…'}
 /> onChange={e=>setQuery(e.target.value)} placeholder={mode==='Marketplace'?'Search furniture, appliances, decor…':'City, ZIP code, neighborhood…'} /><button
   onClick={() => {
