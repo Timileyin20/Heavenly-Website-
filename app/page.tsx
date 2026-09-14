@@ -52,7 +52,28 @@ useEffect(() => {
             <div className="segmented">
               {['Buy','Rent','Marketplace'].map(x => <button key={x} className={mode===x?'active':''} onClick={()=>setMode(x)}>{x}</button>)}
             </div>
-            <div className="searchInput"><span>⌕</span><input value={query} onChange={e=>setQuery(e.target.value)} placeholder={mode==='Marketplace'?'Search furniture, appliances, decor…':'City, ZIP code, neighborhood…'} /><button>Search</button></div>
+            <div className="searchInput"><span>⌕</span><input
+  value={query}
+  onChange={e => setQuery(e.target.value)}
+  onKeyDown={e => {
+    if (e.key === 'Enter') {
+      window.location.href =
+        mode === 'Marketplace'
+          ? `/marketplace?search=${encodeURIComponent(query)}`
+          : `/properties?search=${encodeURIComponent(query)}`
+    }
+  }}
+  placeholder={mode === 'Marketplace' ? 'Search furniture, appliances, decor…' : 'City, ZIP code, neighborhood…'}
+/> onChange={e=>setQuery(e.target.value)} placeholder={mode==='Marketplace'?'Search furniture, appliances, decor…':'City, ZIP code, neighborhood…'} /><button
+  onClick={() => {
+    window.location.href =
+      mode === 'Marketplace'
+        ? `/marketplace?search=${encodeURIComponent(query)}`
+        : `/properties?search=${encodeURIComponent(query)}`
+  }}
+>
+  Search
+</button></div>
           </div>
           <div className="heroTrust"><span>✓ Verified listings</span><span>✓ Secure payments</span><span>✓ Buyer protection</span></div>
         </div>
