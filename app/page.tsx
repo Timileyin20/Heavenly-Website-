@@ -57,7 +57,7 @@ useEffect(() => {
     window.location.href =
       mode === 'Marketplace'
         ? `/marketplace?search=${encodeURIComponent(query)}`
-        : `/properties?search=${encodeURIComponent(query)}`
+        : `/properties?search=${encodeURIComponent(query)}&mode=${encodeURIComponent(mode)}`
   }}
 >
   Search
