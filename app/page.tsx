@@ -52,9 +52,7 @@ useEffect(() => {
             <div className="segmented">
               {['Buy','Rent','Marketplace'].map(x => <button key={x} className={mode===x?'active':''} onClick={()=>setMode(x)}>{x}</button>)}
             </div>
-            <div className="searchInput"><span>⌕</span><input
-  value={query}
-  onChange={e => setQuery(e.target.value)}
+            <div className="searchInput"><span>⌕</span><input value={query} onChange={e=>setQuery(e.target.value)} placeholder={mode==='Marketplace'?'Search furniture, appliances, decor…':'City, ZIP code, neighborhood…'} />
   
   placeholder={mode === 'Marketplace' ? 'Search furniture, appliances, decor…' : 'City, ZIP code, neighborhood…'}
 /> onChange={e=>setQuery(e.target.value)} placeholder={mode==='Marketplace'?'Search furniture, appliances, decor…':'City, ZIP code, neighborhood…'} /><button
