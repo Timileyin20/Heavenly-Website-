@@ -53,10 +53,10 @@ useEffect(() => {
       <section className="hero" style={{
   backgroundImage: `url(${
     heroIndex === 0
-      ? homes[0]?.images?.[0] || 'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=1800&q=85'
-      : heroIndex === 1
-        ? homes[1]?.images?.[0] || 'https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?auto=format&fit=crop&w=1800&q=85'
-        : items[0]?.images?.[0] || 'https://images.unsplash.com/photo-1567538096630-e0c55bd6374c?auto=format&fit=crop&w=1800&q=85'
+  ? homes[0]?.images?.[0] || 'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=1800&q=85'
+  : heroIndex === 1
+    ? homes[1]?.images?.[0] || homes[0]?.images?.[0] || 'https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?auto=format&fit=crop&w=1800&q=85'
+    : items[0]?.images?.[0] || items[1]?.images?.[0] || 'https://images.unsplash.com/photo-1567538096630-e0c55bd6374c?auto=format&fit=crop&w=1800&q=85'
   })`
 }}>
   <div
