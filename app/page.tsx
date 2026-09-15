@@ -8,6 +8,13 @@ export default function Home() {
   const [mode, setMode] = useState('Buy')
   const [query, setQuery] = useState('')
   const [heroIndex, setHeroIndex] = useState(0)
+  useEffect(() => {
+  const timer = setInterval(() => {
+    setHeroIndex((prev) => (prev + 1) % 3)
+  }, 5000)
+
+  return () => clearInterval(timer)
+}, [])
   
 const [homes, setHomes] = useState<any[]>([])
 const [items, setItems] = useState<any[]>([])
