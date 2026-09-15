@@ -69,11 +69,11 @@ useEffect(() => {
 
       <section className="section container" id="homes">
         <div className="sectionHead"><div><span className="kicker">EXPLORE HOMES</span><h2>Places worth coming home to.</h2></div><a href="/properties" className="textLink">View all homes →</a></div>
-        <div className="homeGrid">{homes.map(h => <article className="homeCard" key={h.id}><div className="cardImage"><img src={h.images?.[0] || 'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=1200&q=85'} alt={h.title}/><span className="pill">
+        <div className="homeGrid">{homes.map(h => <a href={`/listing/${h.id}`} className="homeCard" key={h.id}><div className="cardImage"><img src={h.images?.[0] || 'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=1200&q=85'} alt={h.title}/><span className="pill">
   {h.property_mode === 'rent' ? 'For Rent' : 'For Sale'}
 </span><button className="heart">♡</button></div><div className="cardBody"><div className="price">
   {h.property_mode === 'rent' ? `$${Number(h.price).toLocaleString()}/mo` : `$${Number(h.price).toLocaleString()}`}
-</div><h3>{h.title}</h3><p>{h.city}</p><small>{h.beds || 0} bd · {h.baths || 0} ba · {h.sqft ? `${Number(h.sqft).toLocaleString()} sq ft` : 'Size not listed'}</small></div></article>)}</div>
+</div><h3>{h.title}</h3><p>{h.city}</p><small>{h.beds || 0} bd · {h.baths || 0} ba · {h.sqft ? `${Number(h.sqft).toLocaleString()} sq ft` : 'Size not listed'}</small></div></a>)}</div>
       </section>
 
       <section className="splitSection">
