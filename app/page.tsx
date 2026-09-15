@@ -50,30 +50,97 @@ useEffect(() => {
         <div className="navActions"><a href="/signin">Sign in</a><a className="btn btn-dark" href="/sell">List a property</a></div>
       </nav>
 
-      <section className="hero">
-        <div className="heroOverlay" />
-        <div className="heroContent container">
-          <div className="eyebrow">A better way to find what feels like home</div>
-          <h1>Find your next <em>place</em> to call home.</h1>
-          <p>Discover homes for sale and rent, plus quality furniture and household essentials from trusted sellers across the USA.</p>
-          <div className="searchBox">
-            <div className="segmented">
-              {['Buy','Rent','Marketplace'].map(x => <button key={x} className={mode===x?'active':''} onClick={()=>setMode(x)}>{x}</button>)}
-            </div>
-            <div className="searchInput"><span>⌕</span><input value={query} onChange={e=>setQuery(e.target.value)} placeholder={mode==='Marketplace'?'Search furniture, appliances, decor…':'City, ZIP code, neighborhood…'} /><button
-  onClick={() => {
-    window.location.href =
-      mode === 'Marketplace'
-        ? `/marketplace?search=${encodeURIComponent(query)}`
-        : `/properties?search=${encodeURIComponent(query)}&mode=${encodeURIComponent(mode)}`
-  }}
->
-  Search
-</button></div>
-          </div>
-          <div className="heroTrust"><span>✓ Verified listings</span><span>✓ Secure payments</span><span>✓ Buyer protection</span></div>
-        </div>
-      </section>
+      <section className="hero" style={{
+  backgroundImage: `url(${
+    heroIndex === 0
+      ? homes[0]?.images?.[0] || 'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=1800&q=85'
+      : heroIndex === 1
+        ? homes[1]?.images?.[0] || 'https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?auto=format&fit=crop&w=1800&q=85'
+        : items[0]?.images?.[0] || 'https://images.unsplash.com/photo-1567538096630-e0c55bd6374c?auto=format&fit=crop&w=1800&q=85'
+  })`
+}}>
+  <div className="heroOverlay" />
+
+  <div className="heroContent container">
+    <div className="eyebrow">
+      {heroIndex === 2 ? 'HAVENLY MARKETPLACE' : 'HOMES ACROSS THE USA'}
+    </div>
+
+    <h1>
+      {heroIndex === 2
+        ? <>Find something good for <em>home.</em></>
+        : <>Find your next <em>place</em> to call home.</>}
+    </h1>
+
+    <p>
+      {heroIndex === 2
+        ? 'Discover furniture, appliances and household essentials from sellers across the USA.'
+        : 'Discover homes for sale and rent from trusted sellers across the USA.'}
+    </p>
+
+    <div className="searchBox">
+      <div className="segmented">
+        {['Buy','Rent','Marketplace'].map(x => (
+          <button
+            key={x}
+            className={mode===x?'active':''}
+            onClick={()=>setMode(x)}
+          >
+            {x}
+          </button>
+        ))}
+      </div>
+
+      <div className="searchInput">
+        <span>⌕</span>
+        <input
+          value={query}
+          onChange={e=>setQuery(e.target.value)}
+          placeholder={
+            mode==='Marketplace'
+              ? 'Search furniture, appliances, decor…'
+              : 'City, ZIP code, neighborhood…'
+          }
+        />
+
+        <button
+          onClick={() => {
+            window.location.href =
+              mode === 'Marketplace'
+                ? `/marketplace?search=${encodeURIComponent(query)}`
+                : `/properties?search=${encodeURIComponent(query)}&mode=${encodeURIComponent(mode)}`
+          }}
+        >
+          Search
+        </button>
+      </div>
+    </div>
+
+    <div className="heroTrust">
+      <span>✓ Verified listings</span>
+      <span>✓ Secure payments</span>
+      <span>✓ Buyer protection</span>
+    </div>
+
+    <div style={{display:'flex',gap:8,marginTop:20}}>
+      {[0,1,2].map(i => (
+        <button
+          key={i}
+          onClick={() => setHeroIndex(i)}
+          style={{
+            width:10,
+            height:10,
+            borderRadius:'50%',
+            border:0,
+            padding:0,
+            background:i===heroIndex?'white':'rgba(255,255,255,.45)',
+            cursor:'pointer'
+          }}
+        />
+      ))}
+    </div>
+  </div>
+</section>
 
       <section className="section container" id="homes">
         <div className="sectionHead"><div><span className="kicker">EXPLORE HOMES</span><h2>Places worth coming home to.</h2></div><a href="/properties" className="textLink">View all homes →</a></div>
