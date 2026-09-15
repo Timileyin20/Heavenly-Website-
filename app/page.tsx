@@ -50,7 +50,7 @@ useEffect(() => {
         <div className="navActions"><a href="/signin">Sign in</a><a className="btn btn-dark" href="/sell">List a property</a></div>
       </nav>
 
-      <a href={heroIndex === 2 ? '/marketplace' : '/properties'} className="hero" style={{
+      <section className="hero" style={{
   backgroundImage: `url(${
     heroIndex === 0
       ? homes[0]?.images?.[0] || 'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=1800&q=85'
@@ -140,7 +140,7 @@ useEffect(() => {
       ))}
     </div>
   </div>
-</a>
+</section>
 
       <section className="section container" id="homes">
         <div className="sectionHead"><div><span className="kicker">EXPLORE HOMES</span><h2>Places worth coming home to.</h2></div><a href="/properties" className="textLink">View all homes →</a></div>
