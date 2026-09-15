@@ -59,7 +59,13 @@ useEffect(() => {
         : items[0]?.images?.[0] || 'https://images.unsplash.com/photo-1567538096630-e0c55bd6374c?auto=format&fit=crop&w=1800&q=85'
   })`
 }}>
-  <div className="heroOverlay" />
+  <div
+  className="heroOverlay"
+  onClick={() => {
+    window.location.href = heroIndex === 2 ? '/marketplace' : '/properties'
+  }}
+  style={{cursor:'pointer'}}
+/>
 
   <div className="heroContent container">
     <div className="eyebrow">
