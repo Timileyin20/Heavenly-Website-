@@ -154,7 +154,8 @@ useEffect(() => {
   {h.property_mode === 'rent' ? 'For Rent' : 'For Sale'}
 </span><button className="heart">♡</button></div><div className="cardBody"><div className="price">
   {h.property_mode === 'rent' ? `$${Number(h.price).toLocaleString()}/mo` : `$${Number(h.price).toLocaleString()}`}
-</div><h3>{h.title}</h3><p>{h.city}</p><small>{h.beds || 0} bd · {h.baths || 0} ba · {h.sqft ? `${Number(h.sqft).toLocaleString()} sq ft` : 'Size not listed'}</small></div></a>)}</div>
+</div><h3>{h.title}</h3><p>{h.city}</p><small>{h.beds || 0} bd · {h.baths || 0} ba · {h.sqft ? `${Number(h.sqft).toLocaleString()} sq ft` : 'Size not listed'}</small>
+<span style={{display:'inline-block',marginTop:10,fontSize:13,fontWeight:600}}>View details →</span></div></a>)}</div>
       </section>
 
       <section className="splitSection">
@@ -166,7 +167,7 @@ useEffect(() => {
 
       <section className="section container" id="marketplace">
         <div className="sectionHead"><div><span className="kicker">HAVENLY MARKETPLACE</span><h2>Good things for every room.</h2></div><a href="/marketplace" className="textLink">Browse everything →</a></div>
-        <div className="itemGrid">{items.map(i => <a href={`/listing/${i.id}`} className="itemCard" key={i.id}><div className="itemImage"><img src={i.images?.[0] || 'https://images.unsplash.com/photo-1567538096630-e0c55bd6374c?auto=format&fit=crop&w=900&q=85'} alt={i.title}/><span className="heart">♡</span></div><div className="itemBody"><div><h3>{i.title}</h3><p>{i.item_condition || 'Condition not listed'}</p></div><strong>${Number(i.price).toLocaleString()}</strong></div></a>)}</div>
+        <div className="itemGrid">{items.map(i => <a href={`/listing/${i.id}`} className="itemCard" key={i.id}><div className="itemImage"><img src={i.images?.[0] || 'https://images.unsplash.com/photo-1567538096630-e0c55bd6374c?auto=format&fit=crop&w=900&q=85'} alt={i.title}/><span className="heart">♡</span></div><div className="itemBody"><div><h3>{i.title}</h3><p>{i.item_condition || 'Condition not listed'}</p><span style={{display:'inline-block',marginTop:10,fontSize:13,fontWeight:600}}>View details →</span></div><strong>${Number(i.price).toLocaleString()}</strong></div></a>)}</div>
       </section>
 
       <section className="policyBand" id="how"><div className="container policyInner"><div><span className="kicker">SHOP WITH CONFIDENCE</span><h2>Built around trust, not just transactions.</h2></div><div className="policyGrid"><div><b>7-day eligible returns</b><p>Eligible marketplace items can be returned within 7 days of delivery, subject to the item and seller policy.</p></div><div><b>Secure checkout</b><p>Payments are designed around Stripe's secure checkout infrastructure.</p></div><div><b>Safer listings</b><p>Report suspicious listings and keep communication and payments on-platform.</p></div></div></div></section>
