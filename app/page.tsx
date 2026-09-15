@@ -7,6 +7,7 @@ import { supabase } from '../lib/supabase'
 export default function Home() {
   const [mode, setMode] = useState('Buy')
   const [query, setQuery] = useState('')
+  const [heroIndex, setHeroIndex] = useState(0)
   
 const [homes, setHomes] = useState<any[]>([])
 const [items, setItems] = useState<any[]>([])
