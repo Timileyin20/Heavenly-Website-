@@ -35,7 +35,26 @@ function AuthCallbackContent() {
         return
       }
 
-      const role = data.user.user_metadata?.account_type
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('role, account_type, account_status')
+        .eq('id', data.user.id)
+        .maybeSingle()
+
+      if (!mounted) return
+
+      if (profile?.account_status && profile.account_status !== 'active') {
+        await supabase.auth.signOut()
+        setError('Your Havenly account is currently blocked or suspended. Please contact support or an administrator.')
+        return
+      }
+
+      if (profile?.role === 'admin') {
+        router.replace('/admin')
+        return
+      }
+
+      const role = profile?.account_type || data.user.user_metadata?.account_type
       router.replace(role === 'buyer' || role === 'seller' ? '/dashboard' : '/choose-role')
     }
 
@@ -56,15 +75,7 @@ function AuthCallbackContent() {
 
 export default function AuthCallback() {
   return (
-    <Suspense fallback={
-      <main className="container" style={{ minHeight: '100vh', display: 'grid', placeItems: 'center', padding: 24 }}>
-        <div style={{ textAlign: 'center', maxWidth: 520 }}>
-          <span className="brand" style={{ justifyContent: 'center' }}><span className="brandMark">H</span> havenly</span>
-          <h1 style={{ marginTop: 28 }}>Signing you in…</h1>
-          <p className="muted" style={{ marginTop: 12 }}>Please wait while we securely connect your account.</p>
-        </div>
-      </main>
-    }>
+    <Suspense fallback={<main className="container" style={{ minHeight: '100vh', display: 'grid', placeItems: 'center', padding: 24 }}><div style={{ textAlign: 'center', maxWidth: 520 }}><span className="brand" style={{ justifyContent: 'center' }}><span className="brandMark">H</span> havenly</span><h1 style={{ marginTop: 28 }}>Signing you in…</h1><p className="muted" style={{ marginTop: 12 }}>Please wait while we securely connect your account.</p></div></main>}>
       <AuthCallbackContent />
     </Suspense>
   )
