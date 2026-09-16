@@ -9,13 +9,17 @@ const PRODUCTION_URL = 'https://heavenly-website-orpin.vercel.app'
 async function destinationForUser(user: any) {
   const { data: profile } = await supabase
     .from('profiles')
-    .select('role')
+    .select('role, account_type, account_status')
     .eq('id', user.id)
     .maybeSingle()
 
+  if (profile?.account_status && profile.account_status !== 'active') {
+    return `/signin?blocked=${encodeURIComponent(profile.account_status)}`
+  }
+
   if (profile?.role === 'admin') return '/admin'
 
-  const role = user?.user_metadata?.account_type
+  const role = profile?.account_type || user?.user_metadata?.account_type
   return role === 'buyer' || role === 'seller' ? '/dashboard' : '/choose-role'
 }
 
@@ -36,6 +40,12 @@ export default function SignIn() {
       if (session?.user) {
         const destination = await destinationForUser(session.user)
         if (!mounted) return
+        if (destination.startsWith('/signin?blocked=')) {
+          const status = new URLSearchParams(destination.split('?')[1]).get('blocked')
+          setError(`Your account is currently ${status || 'restricted'}. Please contact Havenly support or an administrator.`)
+          setCheckingSession(false)
+          return
+        }
         window.location.replace(destination)
         return
       }
@@ -67,6 +77,13 @@ export default function SignIn() {
     }
 
     const destination = await destinationForUser(user)
+    if (destination.startsWith('/signin?blocked=')) {
+      await supabase.auth.signOut()
+      setError('Your Havenly account is currently blocked or suspended. Please contact support or an administrator.')
+      setLoading(false)
+      return
+    }
+
     window.location.replace(destination)
   }
 
