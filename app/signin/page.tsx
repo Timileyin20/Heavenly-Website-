@@ -1,29 +1,79 @@
 'use client'
 
-import { FormEvent, useState } from 'react'
+import { FormEvent, useEffect, useState } from 'react'
 import Link from 'next/link'
 import { supabase } from '../../lib/supabase'
+
+const PRODUCTION_URL = 'https://heavenly-website-orpin.vercel.app'
+
+function destinationForUser(user: any) {
+  const role = user?.user_metadata?.account_type
+  return role === 'buyer' || role === 'seller' ? '/dashboard' : '/choose-role'
+}
 
 export default function SignIn() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
+  const [checkingSession, setCheckingSession] = useState(true)
   const [error, setError] = useState('')
 
+  useEffect(() => {
+    let mounted = true
+
+    async function checkExistingSession() {
+      const { data: { session } } = await supabase.auth.getSession()
+      if (!mounted) return
+
+      if (session?.user) {
+        window.location.replace(destinationForUser(session.user))
+        return
+      }
+
+      setCheckingSession(false)
+    }
+
+    checkExistingSession()
+    return () => { mounted = false }
+  }, [])
+
   async function submit(e: FormEvent) {
-    e.preventDefault(); setError(''); setLoading(true)
-    const { error } = await supabase.auth.signInWithPassword({ email, password })
-    if (error) { setError(error.message); setLoading(false); return }
-    window.location.href = '/choose-role'
+    e.preventDefault()
+    setError('')
+    setLoading(true)
+
+    const { data, error } = await supabase.auth.signInWithPassword({ email, password })
+    if (error) {
+      setError(error.message)
+      setLoading(false)
+      return
+    }
+
+    const user = data.user || data.session?.user
+    if (!user) {
+      setError('Sign-in succeeded, but we could not load your account session. Please try again.')
+      setLoading(false)
+      return
+    }
+
+    window.location.replace(destinationForUser(user))
   }
 
   async function googleSignIn() {
     setError('')
     const { error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
-      options: { redirectTo: `${window.location.origin}/auth/callback` },
+      options: { redirectTo: `${PRODUCTION_URL}/auth/callback` },
     })
     if (error) setError(error.message)
+  }
+
+  if (checkingSession) {
+    return (
+      <main className="container" style={{ minHeight: '100vh', display: 'grid', placeItems: 'center', padding: 24 }}>
+        <p className="muted">Checking your Havenly session…</p>
+      </main>
+    )
   }
 
   return (
