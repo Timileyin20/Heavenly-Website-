@@ -4,6 +4,8 @@ import { FormEvent, useState } from 'react'
 import Link from 'next/link'
 import { supabase } from '../../lib/supabase'
 
+const PRODUCTION_URL = 'https://heavenly-website-orpin.vercel.app'
+
 export default function ForgotPassword() {
   const [email, setEmail] = useState('')
   const [sent, setSent] = useState(false)
@@ -15,7 +17,7 @@ export default function ForgotPassword() {
     setError('')
     setLoading(true)
     const { error } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: `${window.location.origin}/update-password`,
+      redirectTo: `${PRODUCTION_URL}/update-password`,
     })
     if (error) setError(error.message)
     else setSent(true)
