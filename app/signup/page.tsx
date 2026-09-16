@@ -28,7 +28,7 @@ export default function SignUp() {
       password,
       options: {
         data: { full_name: fullName, phone },
-        emailRedirectTo: typeof window !== 'undefined' ? `${window.location.origin}/choose-role` : undefined,
+        emailRedirectTo: typeof window !== 'undefined' ? `${window.location.origin}/auth/callback` : undefined,
       },
     })
 
@@ -67,9 +67,7 @@ export default function SignUp() {
               <span>I agree to Havenly&apos;s Terms &amp; Conditions, Privacy Policy and marketplace rules.</span>
             </label>
             {error && <p style={{ color: '#a23b35', fontSize: 13, lineHeight: 1.5 }}>{error}</p>}
-            <button disabled={loading} className="btn btn-dark" style={{ border: 0, width: '100%', justifyContent: 'center', marginTop: 16, cursor: 'pointer', opacity: loading ? .65 : 1 }}>
-              {loading ? 'Creating account…' : 'Create account'}
-            </button>
+            <button disabled={loading} className="btn btn-dark" style={{ border: 0, width: '100%', justifyContent: 'center', marginTop: 16, cursor: 'pointer', opacity: loading ? .65 : 1 }}>{loading ? 'Creating account…' : 'Create account'}</button>
           </form>
         )}
         <p style={{ fontSize: 13, color: 'var(--muted)', marginTop: 22, textAlign: 'center' }}>Already have an account? <Link href="/signin" style={{ fontWeight: 700 }}>Sign in</Link></p>
