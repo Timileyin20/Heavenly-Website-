@@ -11,23 +11,50 @@ export default function ChooseRole() {
   const [error, setError] = useState('')
 
   useEffect(() => {
-    supabase.auth.getUser().then(({ data }) => {
-      if (!data.user) router.replace('/signin')
-      else setUser(data.user)
-    })
+    let mounted = true
+
+    async function loadAccount() {
+      const { data } = await supabase.auth.getUser()
+      if (!mounted) return
+      if (!data.user) {
+        router.replace('/signin')
+        return
+      }
+
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('account_status')
+        .eq('id', data.user.id)
+        .maybeSingle()
+
+      if (profile?.account_status && profile.account_status !== 'active') {
+        setError('Your Havenly account is currently blocked or suspended. Please contact support or an administrator.')
+        return
+      }
+
+      setUser(data.user)
+    }
+
+    loadAccount()
+    return () => { mounted = false }
   }, [router])
 
   async function chooseRole(role: 'buyer' | 'seller') {
+    if (!user) return
     setError('')
     setLoading(true)
-    const { error } = await supabase.auth.updateUser({
-      data: { account_type: role },
-    })
-    if (error) {
-      setError(error.message)
+
+    const [{ error: authError }, { error: profileError }] = await Promise.all([
+      supabase.auth.updateUser({ data: { account_type: role } }),
+      supabase.from('profiles').update({ account_type: role }).eq('id', user.id),
+    ])
+
+    if (authError || profileError) {
+      setError(authError?.message || profileError?.message || 'Could not save your account type.')
       setLoading(false)
       return
     }
+
     router.replace('/dashboard')
   }
 
