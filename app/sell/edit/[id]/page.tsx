@@ -1,0 +1,35 @@
+'use client'
+
+import { FormEvent, useEffect, useState } from 'react'
+import { useParams } from 'next/navigation'
+import { supabase } from '../../../../lib/supabase'
+
+export default function EditListingPage() {
+  const { id } = useParams<{ id: string }>()
+  const [form, setForm] = useState({ title: '', price: '', description: '', city: '', state: '', zip_code: '' })
+  const [loading, setLoading] = useState(true)
+  const [saving, setSaving] = useState(false)
+  const [message, setMessage] = useState('')
+  const [error, setError] = useState('')
+
+  useEffect(() => {
+    ;(async () => {
+      const { data: auth } = await supabase.auth.getUser()
+      if (!auth.user) { window.location.replace('/signin'); return }
+      const { data, error } = await supabase.from('listings').select('id,title,price,description,city,state,zip_code,seller_id').eq('id', id).eq('seller_id', auth.user.id).maybeSingle()
+      if (error || !data) { setError('Listing not found or you do not have permission to edit it.'); setLoading(false); return }
+      setForm({ title: data.title || '', price: String(data.price || ''), description: data.description || '', city: data.city || '', state: data.state || '', zip_code: data.zip_code || '' })
+      setLoading(false)
+    })()
+  }, [id])
+
+  async function save(e: FormEvent) {
+    e.preventDefault(); setSaving(true); setError(''); setMessage('')
+    const { error } = await supabase.from('listings').update({ title: form.title.trim(), price: Number(form.price), description: form.description.trim(), city: form.city.trim(), state: form.state.trim() || null, zip_code: form.zip_code.trim() || null, status: 'draft', moderation_status: 'pending', moderation_reason: null }).eq('id', id)
+    if (error) setError(error.message); else setMessage('Changes saved and submitted for admin review.')
+    setSaving(false)
+  }
+
+  if (loading) return <main className="container" style={{ padding: 90 }}>Loading listing…</main>
+  return <main><nav className="nav container"><a className="brand" href="/"><span className="brandMark">H</span> havenly</a><div className="navActions"><a href="/dashboard">Dashboard</a><a href="/">Browse</a></div></nav><section className="container sellPage"><span className="kicker">EDIT LISTING</span><h1>Update your listing.</h1>{error && <div className="errorBox">{error}</div>}{message && <div className="successBox">{message}</div>}<form onSubmit={save} className="listingForm"><div className="formGrid"><label className="full">Title<input required value={form.title} onChange={e=>setForm({...form,title:e.target.value})}/></label><label>Price (USD)<input required type="number" min="0" step="0.01" value={form.price} onChange={e=>setForm({...form,price:e.target.value})}/></label><label>City<input required value={form.city} onChange={e=>setForm({...form,city:e.target.value})}/></label><label>State<input value={form.state} onChange={e=>setForm({...form,state:e.target.value})}/></label><label>ZIP code<input value={form.zip_code} onChange={e=>setForm({...form,zip_code:e.target.value})}/></label><label className="full">Description<textarea rows={7} value={form.description} onChange={e=>setForm({...form,description:e.target.value})}/></label></div><p className="muted">For safety, edited listings return to Pending Review before becoming public again.</p><button className="btn btn-dark" disabled={saving}>{saving ? 'Saving…' : 'Save & submit for review →'}</button></form></section></main>
+}
