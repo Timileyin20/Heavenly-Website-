@@ -1,8 +1,7 @@
 import type { MetadataRoute } from 'next'
 
 export default function sitemap(): MetadataRoute.Sitemap {
-  const baseUrl =
-    'https://heavenly-website-dsrnhs9cg-timidoskiakinwole20-9258.vercel.app/'
+  const baseUrl = 'https://heavenly-website-orpin.vercel.app'
 
   return [
     {
