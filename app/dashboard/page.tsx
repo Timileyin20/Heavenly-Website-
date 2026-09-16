@@ -11,43 +11,91 @@ export default function Dashboard() {
   const [orders, setOrders] = useState<any[]>([])
   const [messages, setMessages] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
+  const [error, setError] = useState('')
 
   useEffect(() => {
     let mounted = true
-    ;(async () => {
-      const { data: { user } } = await supabase.auth.getUser()
-      if (!mounted) return
-      if (!user) { window.location.href = '/signin'; return }
 
-      const accountType = user.user_metadata?.account_type as 'buyer' | 'seller' | undefined
-      if (!accountType) { window.location.href = '/choose-role'; return }
-      setUser(user)
+    async function loadDashboard() {
+      setLoading(true)
+      setError('')
+
+      const { data: sessionData } = await supabase.auth.getSession()
+      const sessionUser = sessionData.session?.user
+
+      if (!sessionUser) {
+        if (mounted) window.location.replace('/signin')
+        return
+      }
+
+      const { data: freshUser, error: userError } = await supabase.auth.getUser()
+      const currentUser = freshUser.user || sessionUser
+
+      if (userError && !currentUser) {
+        if (mounted) {
+          setError('Your session could not be verified. Please sign in again.')
+          setLoading(false)
+        }
+        return
+      }
+
+      if (!mounted) return
+
+      const accountType = currentUser.user_metadata?.account_type as 'buyer' | 'seller' | undefined
+      if (!accountType) {
+        window.location.replace('/choose-role')
+        return
+      }
+
+      setUser(currentUser)
       setRole(accountType)
 
       const [l, f, o, m] = await Promise.all([
-        supabase.from('listings').select('*').eq('seller_id', user.id).order('created_at', { ascending: false }),
-        supabase.from('favorites').select('listing_id, listings(*)').eq('user_id', user.id),
-        supabase.from('orders').select('*').eq(accountType === 'buyer' ? 'buyer_id' : 'seller_id', user.id).order('created_at', { ascending: false }),
-        supabase.from('messages').select('*').or(`sender_id.eq.${user.id},receiver_id.eq.${user.id}`).order('created_at', { ascending: false }),
+        supabase.from('listings').select('*').eq('seller_id', currentUser.id).order('created_at', { ascending: false }),
+        supabase.from('favorites').select('listing_id, listings(*)').eq('user_id', currentUser.id),
+        supabase.from('orders').select('*').eq(accountType === 'buyer' ? 'buyer_id' : 'seller_id', currentUser.id).order('created_at', { ascending: false }),
+        supabase.from('messages').select('*').or(`sender_id.eq.${currentUser.id},receiver_id.eq.${currentUser.id}`).order('created_at', { ascending: false }),
       ])
+
       if (!mounted) return
+
+      const firstError = l.error || f.error || o.error || m.error
+      if (firstError) setError(firstError.message)
+
       setListings(l.data || [])
       setFavorites(f.data || [])
       setOrders(o.data || [])
       setMessages(m.data || [])
       setLoading(false)
-    })()
-    return () => { mounted = false }
+    }
+
+    loadDashboard()
+
+    const { data: listener } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === 'SIGNED_OUT' || !session) {
+        window.location.replace('/signin')
+      }
+    })
+
+    return () => {
+      mounted = false
+      listener.subscription.unsubscribe()
+    }
   }, [])
 
   async function signOut() {
     await supabase.auth.signOut()
-    window.location.href = '/'
+    window.location.replace('/')
   }
 
   async function changeRole() {
+    if (!role) return
     const next = role === 'buyer' ? 'seller' : 'buyer'
-    await supabase.auth.updateUser({ data: { account_type: next } })
+    const { error } = await supabase.auth.updateUser({ data: { account_type: next } })
+    if (error) {
+      setError(error.message)
+      return
+    }
     window.location.reload()
   }
 
@@ -78,6 +126,8 @@ export default function Dashboard() {
           </div>
           <button className="btn" onClick={changeRole}>Switch to {isBuyer ? 'Seller' : 'Buyer'}</button>
         </div>
+
+        {error && <div style={{ marginTop: 22, padding: '12px 15px', borderRadius: 10, background: '#fff4f2', border: '1px solid #efd2cd', color: '#8d3028', fontSize: 13 }}>{error}</div>}
 
         <div className="dashStats" style={{ marginTop: 34 }}>
           {isBuyer ? <>
