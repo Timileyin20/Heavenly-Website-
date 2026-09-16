@@ -4,6 +4,8 @@ import { FormEvent, useState } from 'react'
 import Link from 'next/link'
 import { supabase } from '../../lib/supabase'
 
+const PRODUCTION_URL = 'https://heavenly-website-orpin.vercel.app'
+
 export default function SignUp() {
   const [fullName, setFullName] = useState('')
   const [phone, setPhone] = useState('')
@@ -28,12 +30,12 @@ export default function SignUp() {
       password,
       options: {
         data: { full_name: fullName, phone },
-        emailRedirectTo: typeof window !== 'undefined' ? `${window.location.origin}/auth/callback` : undefined,
+        emailRedirectTo: `${PRODUCTION_URL}/auth/callback`,
       },
     })
 
     if (error) setError(error.message)
-    else if (data.session) window.location.href = '/choose-role'
+    else if (data.session) window.location.replace('/choose-role')
     else setSuccess(true)
     setLoading(false)
   }
