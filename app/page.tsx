@@ -3,43 +3,73 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '../lib/supabase'
 
-
 export default function Home() {
   const [mode, setMode] = useState('Buy')
   const [query, setQuery] = useState('')
   const [heroIndex, setHeroIndex] = useState(0)
+  const [homes, setHomes] = useState<any[]>([])
+  const [items, setItems] = useState<any[]>([])
+  const [loadingListings, setLoadingListings] = useState(true)
+  const [authLoading, setAuthLoading] = useState(true)
+  const [user, setUser] = useState<any>(null)
+
   useEffect(() => {
-  const timer = setInterval(() => {
-    setHeroIndex((prev) => (prev + 1) % 3)
-  }, 5000)
+    const timer = setInterval(() => {
+      setHeroIndex((prev) => (prev + 1) % 3)
+    }, 5000)
 
-  return () => clearInterval(timer)
-}, [])
-  
-const [homes, setHomes] = useState<any[]>([])
-const [items, setItems] = useState<any[]>([])
-const [loadingListings, setLoadingListings] = useState(true)
+    return () => clearInterval(timer)
+  }, [])
 
-useEffect(() => {
-  async function loadListings() {
-    setLoadingListings(true)
+  useEffect(() => {
+    let mounted = true
 
-    const { data, error } = await supabase
-      .from('listings')
-      .select('*')
-      .eq('status', 'active')
-      .order('created_at', { ascending: false })
-
-    if (!error && data) {
-      setHomes(data.filter((listing) => listing.kind === 'property').slice(0, 3))
-      setItems(data.filter((listing) => listing.kind === 'item').slice(0, 4))
+    async function loadAuth() {
+      const { data } = await supabase.auth.getUser()
+      if (!mounted) return
+      setUser(data.user || null)
+      setAuthLoading(false)
     }
 
-    setLoadingListings(false)
-  }
+    loadAuth()
 
-  loadListings()
-}, [])
+    const { data: authListener } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (!mounted) return
+      setUser(session?.user || null)
+      setAuthLoading(false)
+    })
+
+    return () => {
+      mounted = false
+      authListener.subscription.unsubscribe()
+    }
+  }, [])
+
+  useEffect(() => {
+    async function loadListings() {
+      setLoadingListings(true)
+
+      const { data, error } = await supabase
+        .from('listings')
+        .select('*')
+        .eq('status', 'active')
+        .order('created_at', { ascending: false })
+
+      if (!error && data) {
+        setHomes(data.filter((listing) => listing.kind === 'property').slice(0, 3))
+        setItems(data.filter((listing) => listing.kind === 'item').slice(0, 4))
+      }
+
+      setLoadingListings(false)
+    }
+
+    loadListings()
+  }, [])
+
+  const role = user?.user_metadata?.account_type
+  const hasValidRole = role === 'buyer' || role === 'seller'
+  const accountHref = hasValidRole ? '/dashboard' : '/choose-role'
+
   return (
     <main>
       <nav className="nav container">
@@ -47,115 +77,111 @@ useEffect(() => {
         <div className="navLinks">
           <a href="#homes">Homes</a><a href="#marketplace">Marketplace</a><a href="#how">How it works</a>
         </div>
-        <div className="navActions"><a href="/signin">Sign in</a><a className="btn btn-dark" href="/sell">List a property</a></div>
+        <div className="navActions">
+          {!authLoading && user ? (
+            <a href={accountHref}>My Account</a>
+          ) : !authLoading ? (
+            <a href="/signin">Sign in</a>
+          ) : null}
+          <a className="btn btn-dark" href="/sell">List a property</a>
+        </div>
       </nav>
 
       <section className="hero" style={{
-  backgroundImage: `url(${
-    heroIndex === 0
-  ? homes[0]?.images?.[0] || 'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=1800&q=85'
-  : heroIndex === 1
-    ? homes[1]?.images?.[0] || homes[0]?.images?.[0] || 'https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?auto=format&fit=crop&w=1800&q=85'
-    : items[0]?.images?.[0] || items[1]?.images?.[0] || 'https://images.unsplash.com/photo-1567538096630-e0c55bd6374c?auto=format&fit=crop&w=1800&q=85'
-  })`
-}}>
-  <div
-  className="heroOverlay"
-  onClick={() => {
-    window.location.href = heroIndex === 2 ? '/marketplace' : '/properties'
-  }}
-  style={{cursor:'pointer'}}
-/>
-
-  <div className="heroContent container">
-    <div className="eyebrow">
-      {heroIndex === 2 ? 'HAVENLY MARKETPLACE' : 'HOMES ACROSS THE USA'}
-    </div>
-
-    <h1>
-      {heroIndex === 2
-        ? <>Find something good for <em>home.</em></>
-        : <>Find your next <em>place</em> to call home.</>}
-    </h1>
-
-    <p>
-      {heroIndex === 2
-        ? 'Discover furniture, appliances and household essentials from sellers across the USA.'
-        : 'Discover homes for sale and rent from trusted sellers across the USA.'}
-    </p>
-
-    <div className="searchBox">
-      <div className="segmented">
-        {['Buy','Rent','Marketplace'].map(x => (
-          <button
-            key={x}
-            className={mode===x?'active':''}
-            onClick={()=>setMode(x)}
-          >
-            {x}
-          </button>
-        ))}
-      </div>
-
-      <div className="searchInput">
-        <span>⌕</span>
-        <input
-          value={query}
-          onChange={e=>setQuery(e.target.value)}
-          placeholder={
-            mode==='Marketplace'
-              ? 'Search furniture, appliances, decor…'
-              : 'City, ZIP code, neighborhood…'
-          }
-        />
-
-        <button
+        backgroundImage: `url(${heroIndex === 0
+          ? homes[0]?.images?.[0] || 'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=1800&q=85'
+          : heroIndex === 1
+            ? homes[1]?.images?.[0] || homes[0]?.images?.[0] || 'https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?auto=format&fit=crop&w=1800&q=85'
+            : items[0]?.images?.[0] || items[1]?.images?.[0] || 'https://images.unsplash.com/photo-1567538096630-e0c55bd6374c?auto=format&fit=crop&w=1800&q=85'
+        })`
+      }}>
+        <div
+          className="heroOverlay"
           onClick={() => {
-            window.location.href =
-              mode === 'Marketplace'
-                ? `/marketplace?search=${encodeURIComponent(query)}`
-                : `/properties?search=${encodeURIComponent(query)}&mode=${encodeURIComponent(mode)}`
+            window.location.href = heroIndex === 2 ? '/marketplace' : '/properties'
           }}
-        >
-          Search
-        </button>
-      </div>
-    </div>
-
-    <div className="heroTrust">
-      <span>✓ Verified listings</span>
-      <span>✓ Secure payments</span>
-      <span>✓ Buyer protection</span>
-    </div>
-
-    <div style={{display:'flex',gap:8,marginTop:20}}>
-      {[0,1,2].map(i => (
-        <button
-          key={i}
-          onClick={() => setHeroIndex(i)}
-          style={{
-            width:10,
-            height:10,
-            borderRadius:'50%',
-            border:0,
-            padding:0,
-            background:i===heroIndex?'white':'rgba(255,255,255,.45)',
-            cursor:'pointer'
-          }}
+          style={{ cursor: 'pointer' }}
         />
-      ))}
-    </div>
-  </div>
-</section>
+
+        <div className="heroContent container">
+          <div className="eyebrow">
+            {heroIndex === 2 ? 'HAVENLY MARKETPLACE' : 'HOMES ACROSS THE USA'}
+          </div>
+
+          <h1>
+            {heroIndex === 2
+              ? <>Find something good for <em>home.</em></>
+              : <>Find your next <em>place</em> to call home.</>}
+          </h1>
+
+          <p>
+            {heroIndex === 2
+              ? 'Discover furniture, appliances and household essentials from sellers across the USA.'
+              : 'Discover homes for sale and rent from trusted sellers across the USA.'}
+          </p>
+
+          <div className="searchBox">
+            <div className="segmented">
+              {['Buy', 'Rent', 'Marketplace'].map(x => (
+                <button
+                  key={x}
+                  className={mode === x ? 'active' : ''}
+                  onClick={() => setMode(x)}
+                >
+                  {x}
+                </button>
+              ))}
+            </div>
+
+            <div className="searchInput">
+              <span>⌕</span>
+              <input
+                value={query}
+                onChange={e => setQuery(e.target.value)}
+                placeholder={mode === 'Marketplace' ? 'Search furniture, appliances, decor…' : 'City, ZIP code, neighborhood…'}
+              />
+
+              <button
+                onClick={() => {
+                  window.location.href = mode === 'Marketplace'
+                    ? `/marketplace?search=${encodeURIComponent(query)}`
+                    : `/properties?search=${encodeURIComponent(query)}&mode=${encodeURIComponent(mode)}`
+                }}
+              >
+                Search
+              </button>
+            </div>
+          </div>
+
+          <div className="heroTrust">
+            <span>✓ Verified listings</span>
+            <span>✓ Secure payments</span>
+            <span>✓ Buyer protection</span>
+          </div>
+
+          <div style={{ display: 'flex', gap: 8, marginTop: 20 }}>
+            {[0, 1, 2].map(i => (
+              <button
+                key={i}
+                onClick={() => setHeroIndex(i)}
+                style={{
+                  width: 10,
+                  height: 10,
+                  borderRadius: '50%',
+                  border: 0,
+                  padding: 0,
+                  background: i === heroIndex ? 'white' : 'rgba(255,255,255,.45)',
+                  cursor: 'pointer'
+                }}
+              />
+            ))}
+          </div>
+        </div>
+      </section>
 
       <section className="section container" id="homes">
         <div className="sectionHead"><div><span className="kicker">EXPLORE HOMES</span><h2>Places worth coming home to.</h2></div><a href="/properties" className="textLink">View all homes →</a></div>
-        <div className="homeGrid">{homes.map(h => <a href={`/listing/${h.id}`} className="homeCard" key={h.id}><div className="cardImage"><img src={h.images?.[0] || 'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=1200&q=85'} alt={h.title}/><span className="pill">
-  {h.property_mode === 'rent' ? 'For Rent' : 'For Sale'}
-</span><button className="heart">♡</button></div><div className="cardBody"><div className="price">
-  {h.property_mode === 'rent' ? `$${Number(h.price).toLocaleString()}/mo` : `$${Number(h.price).toLocaleString()}`}
-</div><h3>{h.title}</h3><p>{h.city}</p><small>{h.beds || 0} bd · {h.baths || 0} ba · {h.sqft ? `${Number(h.sqft).toLocaleString()} sq ft` : 'Size not listed'}</small>
-<span style={{display:'inline-block',marginTop:10,fontSize:13,fontWeight:600}}>View details →</span></div></a>)}</div>
+        <div className="homeGrid">{homes.map(h => <a href={`/listing/${h.id}`} className="homeCard" key={h.id}><div className="cardImage"><img src={h.images?.[0] || 'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=1200&q=85'} alt={h.title}/><span className="pill">{h.property_mode === 'rent' ? 'For Rent' : 'For Sale'}</span><button className="heart">♡</button></div><div className="cardBody"><div className="price">{h.property_mode === 'rent' ? `$${Number(h.price).toLocaleString()}/mo` : `$${Number(h.price).toLocaleString()}`}</div><h3>{h.title}</h3><p>{h.city}</p><small>{h.beds || 0} bd · {h.baths || 0} ba · {h.sqft ? `${Number(h.sqft).toLocaleString()} sq ft` : 'Size not listed'}</small><span style={{ display: 'inline-block', marginTop: 10, fontSize: 13, fontWeight: 600 }}>View details →</span></div></a>)}</div>
       </section>
 
       <section className="splitSection">
@@ -167,12 +193,12 @@ useEffect(() => {
 
       <section className="section container" id="marketplace">
         <div className="sectionHead"><div><span className="kicker">HAVENLY MARKETPLACE</span><h2>Good things for every room.</h2></div><a href="/marketplace" className="textLink">Browse everything →</a></div>
-        <div className="itemGrid">{items.map(i => <a href={`/listing/${i.id}`} className="itemCard" key={i.id}><div className="itemImage"><img src={i.images?.[0] || 'https://images.unsplash.com/photo-1567538096630-e0c55bd6374c?auto=format&fit=crop&w=900&q=85'} alt={i.title}/><span className="heart">♡</span></div><div className="itemBody"><div><h3>{i.title}</h3><p>{i.item_condition || 'Condition not listed'}</p><span style={{display:'inline-block',marginTop:10,fontSize:13,fontWeight:600}}>View details →</span></div><strong>${Number(i.price).toLocaleString()}</strong></div></a>)}</div>
+        <div className="itemGrid">{items.map(i => <a href={`/listing/${i.id}`} className="itemCard" key={i.id}><div className="itemImage"><img src={i.images?.[0] || 'https://images.unsplash.com/photo-1567538096630-e0c55bd6374c?auto=format&fit=crop&w=900&q=85'} alt={i.title}/><span className="heart">♡</span></div><div className="itemBody"><div><h3>{i.title}</h3><p>{i.item_condition || 'Condition not listed'}</p><span style={{ display: 'inline-block', marginTop: 10, fontSize: 13, fontWeight: 600 }}>View details →</span></div><strong>${Number(i.price).toLocaleString()}</strong></div></a>)}</div>
       </section>
 
       <section className="policyBand" id="how"><div className="container policyInner"><div><span className="kicker">SHOP WITH CONFIDENCE</span><h2>Built around trust, not just transactions.</h2></div><div className="policyGrid"><div><b>7-day eligible returns</b><p>Eligible marketplace items can be returned within 7 days of delivery, subject to the item and seller policy.</p></div><div><b>Secure checkout</b><p>Payments are designed around Stripe's secure checkout infrastructure.</p></div><div><b>Safer listings</b><p>Report suspicious listings and keep communication and payments on-platform.</p></div></div></div></section>
 
-      <footer><div className="container footerTop"><div><a className="brand light" href="#"><span className="brandMark">H</span> havenly</a><p>Find a place. Find a home. Find what you need.</p></div><div><b>Explore</b><a href="/properties">Homes</a><a href="/marketplace">Marketplace</a><a href="/sell">Sell on Havenly</a></div><div><b>Company</b><a href="#how">How it works</a><a href="/policy">Policies & safety</a><a href="/signin">Account</a></div></div><div className="container footerBottom"><span>© 2026 Havenly Marketplace</span><span>USA marketplace · USD</span></div></footer>
+      <footer><div className="container footerTop"><div><a className="brand light" href="#"><span className="brandMark">H</span> havenly</a><p>Find a place. Find a home. Find what you need.</p></div><div><b>Explore</b><a href="/properties">Homes</a><a href="/marketplace">Marketplace</a><a href="/sell">Sell on Havenly</a></div><div><b>Company</b><a href="#how">How it works</a><a href="/policy">Policies & safety</a><a href={accountHref}>Account</a></div></div><div className="container footerBottom"><span>© 2026 Havenly Marketplace</span><span>USA marketplace · USD</span></div></footer>
     </main>
   )
 }
