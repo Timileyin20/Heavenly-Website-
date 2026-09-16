@@ -6,7 +6,15 @@ import { supabase } from '../../lib/supabase'
 
 const PRODUCTION_URL = 'https://heavenly-website-orpin.vercel.app'
 
-function destinationForUser(user: any) {
+async function destinationForUser(user: any) {
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('role')
+    .eq('id', user.id)
+    .maybeSingle()
+
+  if (profile?.role === 'admin') return '/admin'
+
   const role = user?.user_metadata?.account_type
   return role === 'buyer' || role === 'seller' ? '/dashboard' : '/choose-role'
 }
@@ -26,7 +34,9 @@ export default function SignIn() {
       if (!mounted) return
 
       if (session?.user) {
-        window.location.replace(destinationForUser(session.user))
+        const destination = await destinationForUser(session.user)
+        if (!mounted) return
+        window.location.replace(destination)
         return
       }
 
@@ -56,7 +66,8 @@ export default function SignIn() {
       return
     }
 
-    window.location.replace(destinationForUser(user))
+    const destination = await destinationForUser(user)
+    window.location.replace(destination)
   }
 
   async function googleSignIn() {
