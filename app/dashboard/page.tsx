@@ -41,7 +41,26 @@ export default function Dashboard() {
 
       if (!mounted) return
 
-      const accountType = currentUser.user_metadata?.account_type as 'buyer' | 'seller' | undefined
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('role, account_type, account_status')
+        .eq('id', currentUser.id)
+        .maybeSingle()
+
+      if (!mounted) return
+
+      if (profile?.account_status && profile.account_status !== 'active') {
+        await supabase.auth.signOut()
+        window.location.replace('/signin')
+        return
+      }
+
+      if (profile?.role === 'admin') {
+        window.location.replace('/admin')
+        return
+      }
+
+      const accountType = (profile?.account_type || currentUser.user_metadata?.account_type) as 'buyer' | 'seller' | undefined
       if (!accountType) {
         window.location.replace('/choose-role')
         return
@@ -89,11 +108,16 @@ export default function Dashboard() {
   }
 
   async function changeRole() {
-    if (!role) return
+    if (!role || !user) return
     const next = role === 'buyer' ? 'seller' : 'buyer'
-    const { error } = await supabase.auth.updateUser({ data: { account_type: next } })
-    if (error) {
-      setError(error.message)
+    const { error: authError } = await supabase.auth.updateUser({ data: { account_type: next } })
+    if (authError) {
+      setError(authError.message)
+      return
+    }
+    const { error: profileError } = await supabase.from('profiles').update({ account_type: next }).eq('id', user.id)
+    if (profileError) {
+      setError(profileError.message)
       return
     }
     window.location.reload()
@@ -135,7 +159,7 @@ export default function Dashboard() {
             <div><b>{favorites.length}</b><span>Saved listings</span></div>
             <div><b>{messages.length}</b><span>Messages</span></div>
           </> : <>
-            <div><b>{listings.length}</b><span>Active listings</span></div>
+            <div><b>{listings.length}</b><span>My listings</span></div>
             <div><b>{orders.length}</b><span>Sales / orders</span></div>
             <div><b>{messages.length}</b><span>Messages</span></div>
           </>}
@@ -160,7 +184,7 @@ export default function Dashboard() {
           <div className="dashGrid" style={{ marginTop: 36 }}>
             <section>
               <h2>My listings</h2>
-              {listings.length ? <div className="dashList">{listings.map(x => <a href={`/listing/${x.id}`} key={x.id}><b>{x.title}</b><span>${Number(x.price).toLocaleString()} · {x.city}</span><small>{x.status}</small></a>)}</div> : <div><p className="muted">You haven't listed anything yet.</p><a href="/sell" className="btn btn-dark">Create your first listing →</a></div>}
+              {listings.length ? <div className="dashList">{listings.map(x => <a href={`/listing/${x.id}`} key={x.id}><b>{x.title}</b><span>${Number(x.price).toLocaleString()} · {x.city}</span><small>{x.moderation_status === 'pending' ? 'Pending review' : x.moderation_status === 'rejected' ? 'Rejected' : x.status}</small></a>)}</div> : <div><p className="muted">You haven't listed anything yet.</p><a href="/sell" className="btn btn-dark">Create your first listing →</a></div>}
             </section>
             <section>
               <h2>Orders & sales</h2>
